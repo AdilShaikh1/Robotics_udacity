@@ -24,36 +24,51 @@ void process_image_callback(const sensor_msgs::Image img)
 {
 
     int white_pixel = 255;
-    int white_pixel_ht = -1;
     int white_pixel_stp = -1;
-    float lin_x = 0.0;
-    float ang_z = 0.0;
+    auto pose = "no ball";
 
-    for (int i = 0; i< img.height * img.step; i++)
+    for (int i = 0; i< img.height * img.step; i+=3)
     {
-      if(img.data[i] == 255)
+      int red = img.data[i], green = img.data[i+1], blue = img.data[i+2];
+      white_pixel_stp = i % img.step;
+     
+
+      if(red == 255 && green == 255 && blue == 255)
       {
-        white_pixel_ht = i/img.step;
-        white_pixel_stp = i % img.step;
+      
+        if (white_pixel_stp <= img.step * 0.3 && white_pixel_stp >=0)
+        {
+          pose = "left";
+        }
+        else if (white_pixel_stp <= img.step * 0.7 && white_pixel_stp > img.step * 0.3)
+        {
+          pose = "mid";
+        }
+        else if (white_pixel_stp <= img.step * 1 && white_pixel_stp > img.step * 0.7)
+        {
+          pose = "right";
+        }
         break;
       }
     }
-
-    if (white_pixel_stp!= -1)
+    
+    if (pose == "left")
     {
-      lin_x = 0.25;
+      drive_robot(0.25,0.25);
     }
-    else if (white_pixel_stp <= img.step * 0.3 && white_pixel_stp >=0)
+    else if (pose == "right")
     {
-      ang_z = 0.25;
+      drive_robot(0.25,-0.25);
     }
-    else if (white_pixel_stp <= img.step * 1 && white_pixel_stp > img.step * 0.7)
+    else if (pose == "mid")
     {
-      ang_z = 0.25;
+      drive_robot(0.25,0.25);
+    }
+    else
+    {
+      drive_robot(0.0,0.0);
     }
     
-    
-    drive_robot(lin_x, ang_z);
 }
 
 int main(int argc, char** argv)
